@@ -22,14 +22,31 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.get('/me', function(req, res) {
+app.get("/me", function(req, res) {
     res.json({
         isAuthenticated: req.isAuthenticated()
     });
 });
 
+app.post("/register", function(req, res) {
+  var user = new User({
+    username: req.body.username,
+    password: req.body.password
+  });
+  user.save(function(err, user) {
+    if (err) {
+      return res.send(err);
+    }
+    res.json(user);
+  });
+});
+
+app.post("/login", passport.authenticate("local"), function(req, res) {
+  res.json(req.user);
+});
+
 passport.use(new LocalStrategy(function(username, password, done) {
-  User.find({username: username}, function(err, user) {
+  User.findOne({username: username}, function(err, user) {
     if (err) {
       return resizeBy.send(err);
     }
