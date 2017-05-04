@@ -1,11 +1,9 @@
 var mongoose = require("mongoose");
 
 var userSchema = mongoose.Schema({
-  username: {
-    type: String,
-    index: true
-  },
-  password: String
+  username: String,
+  password: String,
+  facebookId: String
 });
 
 mongoose.model("User", userSchema);
