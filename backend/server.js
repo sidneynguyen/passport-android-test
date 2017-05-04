@@ -45,6 +45,13 @@ app.post("/login", passport.authenticate("local"), function(req, res) {
   res.json(req.user);
 });
 
+app.get('/logout', function(req, res) {
+  req.logout();
+  res.json({
+    isAuthenticated: req.isAuthenticated()
+  });
+});
+
 passport.use(new LocalStrategy(function(username, password, done) {
   User.findOne({username: username}, function(err, user) {
     if (err) {

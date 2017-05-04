@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.util.JsonReader;
 import android.util.Log;
 import android.view.View;
+import android.webkit.CookieManager;
 import android.widget.Button;
 
 import org.json.JSONException;
@@ -17,6 +18,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -42,12 +44,23 @@ public class MainActivity extends AppCompatActivity {
                             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                             conn.setDoOutput(true);
                             conn.setDoInput(true);
+                            CookieManager cookieManager = CookieManager.getInstance();
+                            String cookie = cookieManager.getCookie(conn.getURL().toString());
+                            if (cookie != null) {
+                                conn.setRequestProperty("Cookie", cookie);
+                            }
                             conn.setRequestProperty("Content-Type", "application/json");
                             conn.setRequestProperty("Accept", "application/json; charset=UTF-8");
                             conn.setRequestMethod("POST");
                             OutputStreamWriter writer = new OutputStreamWriter(conn.getOutputStream());
                             writer.write(body.toString());
                             writer.flush();
+                            List<String> cookieList = conn.getHeaderFields().get("Set-Cookie");
+                            if (cookieList != null) {
+                                for (String cookieTemp : cookieList) {
+                                    cookieManager.setCookie(conn.getURL().toString(), cookieTemp);
+                                }
+                            }
                             if (conn.getResponseCode() == 200) {
                                 InputStream responseBody = conn.getInputStream();
                                 InputStreamReader responseBodyReader =
@@ -87,6 +100,65 @@ public class MainActivity extends AppCompatActivity {
                         try {
                             URL url = new URL("http://10.0.2.2:3000/me");
                             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                            CookieManager cookieManager = CookieManager.getInstance();
+                            String cookie = cookieManager.getCookie(conn.getURL().toString());
+                            if (cookie != null) {
+                                conn.setRequestProperty("Cookie", cookie);
+                            }
+                            List<String> cookieList = conn.getHeaderFields().get("Set-Cookie");
+                            if (cookieList != null) {
+                                for (String cookieTemp : cookieList) {
+                                    cookieManager.setCookie(conn.getURL().toString(), cookieTemp);
+                                }
+                            }
+                            if (conn.getResponseCode() == 200) {
+                                InputStream responseBody = conn.getInputStream();
+                                InputStreamReader responseBodyReader =
+                                        new InputStreamReader(responseBody, "UTF-8");
+                                JsonReader jsonReader = new JsonReader(responseBodyReader);
+                                jsonReader.beginObject();
+                                while (jsonReader.hasNext()) {
+                                    String key = jsonReader.nextName();
+                                    if (key.equals("isAuthenticated")) {
+                                        Log.d(TAG, "isAuthenticated: " + jsonReader.nextBoolean());
+                                    } else {
+                                        jsonReader.skipValue();
+                                    }
+                                }
+                                jsonReader.close();
+                                conn.disconnect();
+                            } else {
+                                Log.d(TAG, "NOT 200 - " + conn.getResponseCode());
+                            }
+                        } catch (IOException e) {
+                            Log.e(TAG, "ERROR", e);
+                        }
+                    }
+                });
+            }
+        });
+
+        Button button3 = (Button) findViewById(R.id.button3);
+        button3.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                AsyncTask.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            URL url = new URL("http://10.0.2.2:3000/logout");
+                            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                            CookieManager cookieManager = CookieManager.getInstance();
+                            String cookie = cookieManager.getCookie(conn.getURL().toString());
+                            if (cookie != null) {
+                                conn.setRequestProperty("Cookie", cookie);
+                            }
+                            List<String> cookieList = conn.getHeaderFields().get("Set-Cookie");
+                            if (cookieList != null) {
+                                for (String cookieTemp : cookieList) {
+                                    cookieManager.setCookie(conn.getURL().toString(), cookieTemp);
+                                }
+                            }
                             if (conn.getResponseCode() == 200) {
                                 InputStream responseBody = conn.getInputStream();
                                 InputStreamReader responseBodyReader =
@@ -114,4 +186,5 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
 }
